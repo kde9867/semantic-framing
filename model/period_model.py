@@ -1,11 +1,8 @@
 import pandas as pd
 import torch
-from torch.utils.data import Dataset, DataLoader
-from transformers import AutoModelForMaskedLM, AutoTokenizer, get_linear_schedule_with_warmup
-from torch.optim import AdamW
-from model.preprocessing import load_jargons, remove_jargons
 import numpy as np
 from tqdm import tqdm
+from model.preprocessing import load_jargons, remove_jargons, load_full_test_data
 import os
 import argparse
 from datetime import datetime
@@ -15,17 +12,6 @@ import re
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-
-def load_full_test_data(full_test_path, text_column):
-    """Load test set to exclude from training"""
-    if not os.path.exists(full_test_path):
-        logger.warning(f"Test data file not found: {full_test_path}")
-        return set()
-    
-    test_df = pd.read_csv(full_test_path)
-    test_contents = set(test_df[text_column].astype(str).str.strip())
-    logger.info(f"Loaded {len(test_contents):,} test samples")
-    return test_contents
 
 def prepare_single_dataset(data_path, jargon_path, text_column, full_test_contents, val_ratio=0.1, seed=42):
     """Load data, remove jargons, exclude test set, and split into train/val"""
