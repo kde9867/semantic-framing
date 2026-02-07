@@ -34,3 +34,14 @@ def remove_jargons(text, jargons):
     # Remove extra whitespace
     text = re.sub(r'\s+', ' ', text).strip()
     return text
+
+def load_full_test_data(full_test_path, text_column):
+    """Load test set to exclude from training"""
+    if not os.path.exists(full_test_path):
+        logger.warning(f"Test data file not found: {full_test_path}")
+        return set()
+    
+    test_df = pd.read_csv(full_test_path)
+    test_contents = set(test_df[text_column].astype(str).str.strip())
+    logger.info(f"Loaded {len(test_contents):,} test samples")
+    return test_contents
