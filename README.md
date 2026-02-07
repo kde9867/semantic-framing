@@ -16,7 +16,7 @@ python train_period_models.py \
     --epochs 3 \
     --batch_size 16 \
     --gpu_id 0
-
+```
 ### Period-based Training
 ```bash
 python train_period_models.py \
@@ -27,7 +27,7 @@ python train_period_models.py \
     --epochs 3 \
     --batch_size 16 \
     --gpu_id 0
-
+```
 ### Period-based Training
 ```bash
 python train_quarterly_models.py \
@@ -39,3 +39,4 @@ python train_quarterly_models.py \
     --epochs 3 \
     --batch_size 16 \
     --gpu_id 0
+```
