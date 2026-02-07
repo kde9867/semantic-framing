@@ -3,6 +3,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from transformers import AutoModelForMaskedLM, AutoTokenizer, get_linear_schedule_with_warmup
 from torch.optim import AdamW
+from model.preprocessing import load_jargons, remove_jargons
 import numpy as np
 from tqdm import tqdm
 import os
