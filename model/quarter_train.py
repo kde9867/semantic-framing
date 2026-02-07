@@ -13,6 +13,7 @@ import json
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+
 def get_quarter_label(date):
     """Convert date to quarter label (e.g., 2020Q1)"""
     year = date.year
