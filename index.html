@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>출산 관련 키워드의 코로나 충격 및 회복 패턴</title>
+
+  <!-- Plotly -->
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <!-- PapaParse (CSV parsing) -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial, sans-serif; margin: 0; }
+    header { padding: 18px 20px; border-bottom: 1px solid #eee; }
+    h1 { margin: 0 0 6px 0; font-size: 20px; }
+    .sub { color: #666; font-size: 13px; }
+    .wrap { display: grid; grid-template-columns: 360px 1fr; gap: 14px; padding: 14px; }
+    .panel { border: 1px solid #eee; border-radius: 12px; padding: 12px; }
+    .panel h2 { margin: 0 0 10px 0; font-size: 14px; }
+    label { display: block; font-size: 13px; margin: 8px 0 4px; color: #333; }
+    input[type="text"], input[type="number"] {
+      width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #ddd; border-radius: 10px; outline: none;
+    }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .checks { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .checks label { display: inline-flex; gap: 6px; margin: 0; }
+    details { border: 1px dashed #ddd; border-radius: 10px; padding: 8px 10px; margin-top: 10px; }
+    summary { cursor: pointer; font-size: 13px; color: #333; }
+    #plot { height: 820px; }
+    .hint { font-size: 12px; color: #666; margin-top: 6px; line-height: 1.35; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; background: #f4f4f4; color: #333; }
+    .foot { margin-top: 10px; font-size: 12px; color: #666; line-height: 1.35; }
+    @media (max-width: 1100px){
+      .wrap { grid-template-columns: 1fr; }
+      #plot { height: 720px; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>출산 관련 키워드의 코로나 충격 및 회복 패턴 <span class="badge" id="countBadge">0개</span></h1>
+    <div class="sub">Interactive Micro/Macro Analysis · x = range2_mean − range1_mean, y = range3_mean − range2_mean</div>
+  </header>
+
+  <div class="wrap">
+    <!-- Control panel -->
+    <div class="panel">
+      <h2>필터</h2>
+
+      <div class="hint">
+        이 페이지는 <b>data.csv</b>를 자동으로 불러옵니다. (index.html과 같은 폴더에 두세요)
+      </div>
+
+      <label>미시/거시 선택</label>
+      <div class="checks">
+        <label><input type="checkbox" id="chkMicro" checked /> 미시(Micro) <span style="color:red;">●</span></label>
+        <label><input type="checkbox" id="chkMacro" checked /> 거시(Macro) <span style="color:blue;">●</span></label>
+      </div>
+
+      <label>키워드 검색(부분일치)</label>
+      <input id="searchWord" type="text" placeholder="예: 출산, 육아휴직, 통계청..." />
+
+      <label>최소 표본수(sample_count)</label>
+      <input id="minCount" type="number" value="0" min="0" step="100" />
+
+      <label>라벨 표시</label>
+      <div class="checks">
+        <label><input type="checkbox" id="showLabels" checked /> 점 위에 단어 라벨</label>
+      </div>
+
+      <!-- Y-axis fold/unfold -->
+      <details id="yAxisDetails">
+        <summary>세로축(Y) 설정 (접기/펼치기)</summary>
+        <div style="margin-top:10px;">
+          <div class="checks">
+            <label><input type="checkbox" id="yAuto" checked /> Y축 자동 스케일</label>
+            <label><input type="checkbox" id="yZero" checked /> Y=0 기준선</label>
+          </div>
+          <div class="row" style="margin-top:10px;">
+            <div>
+              <label>Y 최소</label>
+              <input id="yMin" type="number" step="0.0001" />
+            </div>
+            <div>
+              <label>Y 최대</label>
+              <input id="yMax" type="number" step="0.0001" />
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details>
+        <summary>가로축(X) 설정</summary>
+        <div style="margin-top:10px;">
+          <div class="checks">
+            <label><input type="checkbox" id="xAuto" checked /> X축 자동 스케일</label>
+            <label><input type="checkbox" id="xZero" checked /> X=0 기준선</label>
+          </div>
+          <div class="row" style="margin-top:10px;">
+            <div>
+              <label>X 최소</label>
+              <input id="xMin" type="number" step="0.0001" />
+            </div>
+            <div>
+              <label>X 최대</label>
+              <input id="xMax" type="number" step="0.0001" />
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <div class="foot">
+        분류 규칙: <b>(range1_mean + range2_mean + range3_mean)/3 ≥ 0 → 거시(Macro, 빨강)</b>, <b>(range1_mean + range2_mean + range3_mean)/3 &lt; 0 → 미시(Micro, 파랑)</b><br/>
+        축 정의: x = (range2_mean - range1_mean), y = (range3_mean - range2_mean)
+      </div>
+    </div>
+
+    <!-- Plot -->
+    <div class="panel">
+      <div id="plot"></div>
+    </div>
+  </div>
+
+<script>
+  // =============================
+  // 0) 설정: 같은 폴더에 둔 CSV 파일명
+  // =============================
+  const CSV_PATH = "./data.csv";
+
+  // =============================
+  // 1) 상태
+  // =============================
+  let cleanRows = [];
+
+  const el = (id) => document.getElementById(id);
+
+  // =============================
+  // 2) 유틸
+  // =============================
+  function toNum(v){
+    const x = (v === null || v === undefined) ? NaN : Number(v);
+    return Number.isFinite(x) ? x : NaN;
+  }
+
+  function prepare(rows){
+    const out = [];
+    for (const r of rows){
+      const word = (r.word ?? "").toString().trim();
+      const r1 = toNum(r.range1_mean);
+      const r2 = toNum(r.range2_mean);
+      const r3 = toNum(r.range3_mean);
+      if (!word || !Number.isFinite(r1) || !Number.isFinite(r2) || !Number.isFinite(r3)) continue;
+
+      const d1 = r2 - r1; // During - Before
+      const d2 = r3 - r2; // After - During
+      const group = (r3 >= 0) ? "거시(Macro)" : "미시(Micro)";
+
+      const sc = toNum(r.sample_count);
+      const sampleCount = Number.isFinite(sc) ? sc : null;
+
+      out.push({
+        word, d1, d2, group,
+        sample_count: sampleCount,
+        range1_mean: r1, range2_mean: r2, range3_mean: r3
+      });
+    }
+    return out;
+  }
+
+  function applyFilters(){
+    const useMicro = el("chkMicro").checked;
+    const useMacro = el("chkMacro").checked;
+
+    const query = el("searchWord").value.trim().toLowerCase();
+    const minCount = toNum(el("minCount").value) || 0;
+
+    let df = cleanRows.slice();
+
+    df = df.filter(d => {
+      if (d.group === "미시(Micro)" && !useMicro) return false;
+      if (d.group === "거시(Macro)" && !useMacro) return false;
+      if (query && !d.word.toLowerCase().includes(query)) return false;
+      if (d.sample_count !== null && d.sample_count < minCount) return false;
+      if (d.sample_count === null && minCount > 0) return false;
+      return true;
+    });
+
+    el("countBadge").textContent = `${df.length}개`;
+    return df;
+  }
+
+  function setAxisDefaults(df){
+    if (!df.length) return;
+
+    const d2s = df.map(d => d.d2);
+    const d1s = df.map(d => d.d1);
+
+    const yMin = Math.min(...d2s), yMax = Math.max(...d2s);
+    const xMin = Math.min(...d1s), xMax = Math.max(...d1s);
+
+    if (el("yMin").value === "") el("yMin").value = yMin;
+    if (el("yMax").value === "") el("yMax").value = yMax;
+    if (el("xMin").value === "") el("xMin").value = xMin;
+    if (el("xMax").value === "") el("xMax").value = xMax;
+  }
+
+  function render(){
+    const df = applyFilters();
+    setAxisDefaults(df);
+
+    const showLabels = el("showLabels").checked;
+
+    const micro = df.filter(d => d.group === "미시(Micro)");
+    const macro = df.filter(d => d.group === "거시(Macro)");
+
+    const traceMacro = {
+      type: "scatter",
+      mode: showLabels ? "markers+text" : "markers",
+      name: "거시(Macro)",
+      x: macro.map(d => d.d1),
+      y: macro.map(d => d.d2),
+      text: macro.map(d => d.word),
+      textposition: "top center",
+      marker: { color: "blue", size: 10, opacity: 0.85 },
+      hovertemplate:
+        "<b>%{text}</b><br>" +
+        "group: 거시(Macro)<br>" +
+        "d1 (range2-range1): %{x:.6f}<br>" +
+        "d2 (range3-range2): %{y:.6f}<br>" +
+        "<extra></extra>"
+    };
+
+    const traceMicro = {
+      type: "scatter",
+      mode: showLabels ? "markers+text" : "markers",
+      name: "미시(Micro)",
+      x: micro.map(d => d.d1),
+      y: micro.map(d => d.d2),
+      text: micro.map(d => d.word),
+      textposition: "top center",
+      marker: { color: "red", size: 10, opacity: 0.85 },
+      hovertemplate:
+        "<b>%{text}</b><br>" +
+        "group: 미시(Micro)<br>" +
+        "d1 (range2-range1): %{x:.6f}<br>" +
+        "d2 (range3-range2): %{y:.6f}<br>" +
+        "<extra></extra>"
+    };
+
+    const yAuto = el("yAuto").checked;
+    const xAuto = el("xAuto").checked;
+    const yZero = el("yZero").checked;
+    const xZero = el("xZero").checked;
+
+    const layout = {
+      title: { text: "출산 관련 키워드의 코로나 충격 및 회복 패턴", x: 0.02 },
+      xaxis: {
+        title: "d1: During - Before (코로나 충격)",
+        zeroline: xZero,
+        zerolinewidth: 2,
+        range: xAuto ? undefined : [toNum(el("xMin").value), toNum(el("xMax").value)]
+      },
+      yaxis: {
+        title: "d2: After - During (코로나 회복)",
+        zeroline: yZero,
+        zerolinewidth: 2,
+        range: yAuto ? undefined : [toNum(el("yMin").value), toNum(el("yMax").value)]
+      },
+      legend: { title: { text: "구분" }, orientation: "h", x: 0.02, y: 1.03 },
+      margin: { l: 60, r: 30, t: 70, b: 60 },
+      height: 820,
+      hovermode: "closest"
+    };
+
+    Plotly.newPlot("plot", [traceMacro, traceMicro], layout, { responsive: true, displaylogo: false });
+  }
+
+  async function loadCSV(){
+    // fetch로 불러오기
+    const res = await fetch(CSV_PATH, { cache: "no-store" });
+    if (!res.ok) {
+      const msg = `CSV 로드 실패: ${CSV_PATH} (HTTP ${res.status})`;
+      Plotly.newPlot("plot", [], { title: { text: msg, x: 0.02 }, height: 600 }, { responsive: true });
+      return;
+    }
+    const text = await res.text();
+
+    Papa.parse(text, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (parsed) => {
+        cleanRows = prepare(parsed.data);
+        render();
+      }
+    });
+  }
+
+  // 컨트롤 변경 시 자동 렌더
+  ["chkMicro","chkMacro","searchWord","minCount","showLabels","yAuto","yZero","yMin","yMax","xAuto","xZero","xMin","xMax"]
+    .forEach(id => el(id).addEventListener("input", () => {
+      if (cleanRows.length) render();
+    }));
+
+  // 초기 placeholder
+  Plotly.newPlot("plot", [], {
+    title: { text: "data.csv를 불러오는 중...", x: 0.02 },
+    xaxis: { title: "d1: During - Before (코로나 충격)" },
+    yaxis: { title: "d2: After - During (코로나 회복)" },
+    height: 600,
+    margin: { l: 60, r: 30, t: 70, b: 60 },
+  }, { responsive: true, displaylogo: false });
+
+  // 페이지 로드 시 자동 로드
+  loadCSV();
+</script>
+</body>
+</html>
+
+
+
+
