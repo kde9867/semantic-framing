@@ -27,13 +27,13 @@
     .checks label { display: inline-flex; gap: 6px; margin: 0; }
     details { border: 1px dashed #ddd; border-radius: 10px; padding: 8px 10px; margin-top: 10px; }
     summary { cursor: pointer; font-size: 13px; color: #333; }
-    #plot { height: 820px; }
+    #plot { height: 1230px; }
     .hint { font-size: 12px; color: #666; margin-top: 6px; line-height: 1.35; }
     .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; background: #f4f4f4; color: #333; }
     .foot { margin-top: 10px; font-size: 12px; color: #666; line-height: 1.35; }
     @media (max-width: 1100px){
       .wrap { grid-template-columns: 1fr; }
-      #plot { height: 720px; }
+      #plot { height: 1230px; }
     }
   </style>
 </head>
@@ -270,7 +270,7 @@
       },
       legend: { title: { text: "Category" }, orientation: "h", x: 0.02, y: 1.03 },
       margin: { l: 60, r: 30, t: 70, b: 60 },
-      height: 820,
+      height: 1230,
       hovermode: "closest"
     };
 
@@ -282,7 +282,7 @@
     const res = await fetch(CSV_PATH, { cache: "no-store" });
     if (!res.ok) {
       const msg = `CSV File Could Not Be Loaded: ${CSV_PATH} (HTTP ${res.status})`;
-      Plotly.newPlot("plot", [], { title: { text: msg, x: 0.02 }, height: 600 }, { responsive: true });
+      Plotly.newPlot("plot", [], { title: { text: msg, x: 0.02 }, height: 900 }, { responsive: true });
       return;
     }
     const text = await res.text();
@@ -317,6 +317,7 @@
 </script>
 </body>
 </html>
+
 
 
 
