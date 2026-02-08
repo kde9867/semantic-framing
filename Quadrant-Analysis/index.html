@@ -212,13 +212,13 @@
 
     const showLabels = el("showLabels").checked;
 
-    const micro = df.filter(d => d.group === "미시(Micro)");
-    const macro = df.filter(d => d.group === "거시(Macro)");
+    const micro = df.filter(d => d.group === "Micro");
+    const macro = df.filter(d => d.group === "Macro");
 
     const traceMacro = {
       type: "scatter",
       mode: showLabels ? "markers+text" : "markers",
-      name: "거시(Macro)",
+      name: "Macro",
       x: macro.map(d => d.d1),
       y: macro.map(d => d.d2),
       text: macro.map(d => d.word),
@@ -226,7 +226,7 @@
       marker: { color: "blue", size: 10, opacity: 0.85 },
       hovertemplate:
         "<b>%{text}</b><br>" +
-        "group: 거시(Macro)<br>" +
+        "group: Macro<br>" +
         "d1 (range2-range1): %{x:.6f}<br>" +
         "d2 (range3-range2): %{y:.6f}<br>" +
         "<extra></extra>"
@@ -317,6 +317,7 @@
 </script>
 </body>
 </html>
+
 
 
 
