@@ -155,7 +155,7 @@
 
       const d1 = r2 - r1; // During - Before
       const d2 = r3 - r2; // After - During
-      const group = (r3 >= 0) ? "거시(Macro)" : "미시(Micro)";
+      const group = (r3 >= 0) ? "Macro" : "Micro";
 
       const sc = toNum(r.sample_count);
       const sampleCount = Number.isFinite(sc) ? sc : null;
@@ -179,15 +179,15 @@
     let df = cleanRows.slice();
 
     df = df.filter(d => {
-      if (d.group === "미시(Micro)" && !useMicro) return false;
-      if (d.group === "거시(Macro)" && !useMacro) return false;
+      if (d.group === "Micro" && !useMicro) return false;
+      if (d.group === "Macro" && !useMacro) return false;
       if (query && !d.word.toLowerCase().includes(query)) return false;
       if (d.sample_count !== null && d.sample_count < minCount) return false;
       if (d.sample_count === null && minCount > 0) return false;
       return true;
     });
 
-    el("countBadge").textContent = `${df.length}개`;
+    el("countBadge").textContent = `${df.length}ea`;
     return df;
   }
 
@@ -317,6 +317,7 @@
 </script>
 </body>
 </html>
+
 
 
 
