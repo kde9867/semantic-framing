@@ -61,7 +61,10 @@
 
       <label>Keyword Filter (Partial String Matching)</label>
       <input id="searchWord" type="text" placeholder="e.g., childbirth, parental leave, Statistics Korea" />
-
+      
+      <label>sample_count</label> 
+      <input id="minCount" type="number" value="0" min="0" step="100" />
+      
       <label>Show Labels</label>
       <div class="checks">
         <label><input type="checkbox" id="showLabels" checked /> Show Word Labels Above Points</label>
@@ -319,6 +322,7 @@
 </script>
 </body>
 </html>
+
 
 
 
